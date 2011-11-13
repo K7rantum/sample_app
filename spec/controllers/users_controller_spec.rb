@@ -21,9 +21,9 @@ describe UsersController do
         third  = Factory(:user, :name => "Ben", :email => "another@example.net")
 
         @users = [@user, second, third]
-		30.times do
-		  @users << Factory(:user, :email => Factory.next(:email))
-		end
+		    30.times do
+		      @users << Factory(:user, :email => Factory.next(:email))
+		    end
       end
 
       it "should be successful" do
@@ -43,15 +43,15 @@ describe UsersController do
         end
       end
 	  
-	  it "should paginate users" do
-	    get :index
-		response.should have_selector("div.pagination")
-		response.should have_selector("span.disabled", :content => "Previous")
-		response.should have_selector("a", :href => "/users?page=2",
+	    it "should paginate users" do
+	      get :index
+		    response.should have_selector("div.pagination")
+		    response.should have_selector("span.disabled", :content => "Previous")
+		    response.should have_selector("a", :href => "/users?page=2",
                                            :content => "2")
-		response.should have_selector("a", :href => "/users?page=2",
+		    response.should have_selector("a", :href => "/users?page=2",
                                            :content => "Next")
-	  end # should paginate
+	    end
     end # signed in users
   end # get index
   
@@ -147,20 +147,20 @@ describe UsersController do
         end.should change(User, :count).by(1)
       end
 	  
-	  it "should sign the user in" do
-		post :create, :user => @attr
-		controller.should be_signed_in
-	  end
+	    it "should sign the user in" do
+		    post :create, :user => @attr
+		    controller.should be_signed_in
+	    end
 
       it "should redirect to the user show page" do
         post :create, :user => @attr
         response.should redirect_to(user_path(assigns(:user)))
       end
 	  
-	  it "should have a welcome message" do
-	    post :create, :user => @attr
-		flash[:success].should =~ /Welcome to the sample app/i
-	  end
+	    it "should have a welcome message" do
+	      post :create, :user => @attr
+		    flash[:success].should =~ /Welcome to the sample app/i
+	    end
     end # create user SUCCESS	
   end # describe POST create
   
@@ -214,7 +214,7 @@ describe UsersController do
       end
     end # fail update
 	
-	describe "success" do
+	  describe "success" do
 
       before(:each) do
         @attr = { :name => "New Name", :email => "user@example.org",
@@ -259,7 +259,7 @@ describe UsersController do
       end
     end # non signed-in users forwarded to sign-in page (***)
 	
-	describe "for signed-in users" do
+	  describe "for signed-in users" do
 
       before(:each) do
         wrong_user = Factory(:user, :email => "user@example.net")
@@ -298,7 +298,7 @@ describe UsersController do
         delete :destroy, :id => @user
         response.should redirect_to(root_path)
       end
-    end # as regular user (not allowed)
+    end
 
     describe "as an admin user" do
 
@@ -319,5 +319,42 @@ describe UsersController do
       end
     end # as admin
   end # delete users
+  
+    describe "follow pages" do
+
+      describe "when not signed in" do
+
+        it "should protect 'following'" do
+          get :following, :id => 1
+          response.should redirect_to(signin_path)
+        end
+
+        it "should protect 'followers'" do
+          get :followers, :id => 1
+          response.should redirect_to(signin_path)
+        end
+      end # not signed in
+
+      describe "when signed in" do
+
+        before(:each) do
+          @user = test_sign_in(Factory(:user))
+          @other_user = Factory(:user, :email => Factory.next(:email))
+          @user.follow!(@other_user)
+        end
+
+        it "should show user following" do
+          get :following, :id => @user
+          response.should have_selector("a", :href => user_path(@other_user),
+                                             :content => @other_user.name)
+        end
+
+        it "should show user followers" do
+          get :followers, :id => @other_user
+          response.should have_selector("a", :href => user_path(@user),
+                                             :content => @user.name)
+        end
+      end # signed in
+    end # follow pages
   
 end	
